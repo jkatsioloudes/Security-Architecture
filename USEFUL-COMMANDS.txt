@@ -1,8 +1,8 @@
-# Test a tcp connection.
+# Test a tcp connection
 
 nc -v <ip address> <port>
 
-# Test a udp connection (probably can be done with NC, but NMAP FTW).
+# Test a udp connection (probably can be done with NC, but NMAP FTW)
 
 nmap -sU -p <port> <ip address>
 
