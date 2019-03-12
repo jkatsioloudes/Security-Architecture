@@ -1,6 +1,7 @@
-ifconfig eth0 137.205.34.21/16
-ifup eth0
-route add default gw 137.205.157.254
+# Internal LDAP Server.
+
+ifconfig eth0 10.0.11.2/30
+route add default gw 10.0.11.1
 
 while true; do nc -lvp 389;done &
 while true; do nc -ulvp 389;done &
