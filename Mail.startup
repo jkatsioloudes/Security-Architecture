@@ -1,6 +1,10 @@
-ifconfig eth0 137.205.139.114/16
-ifup eth0
-route add default gw 137.205.157.254
+# Mail Server is accessible both to insiders and outsiders
+# but it is considered of a lower risk compared to the VPN
+# server. This server is isolated to a DMZ but the same DMZ
+# is able to accommodate other assets of a similar risk profile.
+
+ifconfig eth0 192.168.1.2/30
+route add default gw 192.168.1.1
 
 while true; do nc -lvp 25;done &
 while true; do nc -lvp 587;done &

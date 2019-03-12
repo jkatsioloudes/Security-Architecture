@@ -1,0 +1,17 @@
+# DMZ Gateway VPN is responsible to route both
+# internal and external connections to the 
+# OpenVPN server. 
+
+ifconfig eth0 172.16.0.2/30
+ifconfig eth1 10.0.1.2/30
+ifconfig eth2 172.16.1.1/30
+
+# Adding networks that are accessible through
+# directly connected gateways including the 
+# TODO
+# Accessible components are
+# TODO
+
+
+
+

@@ -1,0 +1,13 @@
+# DMZ Gateway Mail is responsible to route both
+# internal and external connections to the 
+# Mail server. 
+
+ifconfig eth0 192.168.0.2/30
+ifconfig eth1 10.0.2.2/30
+ifconfig eth2 192.168.1.1/30
+
+# Adding networks that are accessible through
+# directly connected gateways including the 
+# TODO
+# Accessible components are
+# TODO

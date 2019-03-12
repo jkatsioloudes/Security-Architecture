@@ -1,5 +1,13 @@
-ifconfig eth0 137.205.89.215/16
-ifup eth0
-route add default gw 137.205.157.254
+# Open VPN service offering acccess to inside LAN
+# for outsiders but also to insiders to potential
+# facilities outside. Due to this, it is a highly risky
+# asset due to the impact of someone accessing the
+# inside without being entitled to and for this reason
+# it is placed to a distinguished DMZ that it's well
+# monitored, compared to the Mail server DMZ that is able
+# to accommodate Fileservers, Application, Web Servers etc.
+
+ifconfig eth0 172.16.1.2/30
+route add default gw 172.16.1.1
 
 while true; do nc -lvp 1194; done &
