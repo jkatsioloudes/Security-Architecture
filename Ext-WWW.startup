@@ -2,6 +2,8 @@
 # outside in order to provide website content.
 
 ifconfig eth0 201.224.19.7/16
+
+# Defaults to public Internet.
 route add default gw 201.224.131.22
 
 a2enmod ssl

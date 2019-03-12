@@ -7,6 +7,7 @@ ifconfig eth0 10.0.3.2/30
 ifconfig eth1 10.0.4.1/30
 ifconfig eth2 10.0.6.1/30
 
+
 # This gateway knows about the deeper networks it
 # accommodates to successfully deliver packets.
 # These include the WBS and WMG LAN via GW-Staff.

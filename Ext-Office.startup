@@ -3,4 +3,6 @@
 # network of the organisation passing by Internet.
 
 ifconfig eth0 22.39.224.18/30
+
+# Defaults to public Internet.
 route add default gw 22.39.224.17

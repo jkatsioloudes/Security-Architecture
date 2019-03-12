@@ -3,4 +3,6 @@
 # malicious intent.
 
 ifconfig eth0 66.66.66.2/30
+
+# Defaults to public Internet.
 route add default gw 66.66.66.1

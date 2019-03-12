@@ -6,6 +6,7 @@ ifconfig eth0 172.16.0.2/30
 ifconfig eth1 10.0.1.2/30
 ifconfig eth2 172.16.1.1/30
 
+
 # The following constitutes a security restriction 
 # where the gateway only knows about the WBS and 
 # WMG LAN as business requirements suggest that
