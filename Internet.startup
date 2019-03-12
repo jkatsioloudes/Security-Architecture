@@ -1,9 +1,13 @@
-ifconfig eth0 201.224.131.22/16
-ifconfig eth1 8.8.8.1/24
-ifconfig eth2 22.39.224.17/30
-ifconfig eth3 137.205.157.254/16
+# Public Internet acts as gateway to facilitate
+# connections from and to Ext-Hostile, Ext-Office,
+# Ext-DNS, Ext-WWW and Ext-FW-Squid.
 
-ifup eth0
-ifup eth1
-ifup eth2
-ifup eth3
+ifconfig eth0 137.205.0.2/16
+ifconfig eth1 22.39.224.17/30
+ifconfig eth2 66.66.66.1/30
+ifconfig eth3 8.8.8.1/24
+ifconfig eth4 201.224.131.22/16
+
+#TODO here in the sand-diamond there were some
+# internal nets that we should avoid as they
+# point inside the DMZ of Warwick.

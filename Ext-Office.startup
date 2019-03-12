@@ -1,3 +1,6 @@
+# External Office is allowed to connect via OpenVPN
+# (which sits in Warwick's DMZ) to the internal 
+# network of the organisation passing by Internet.
+
 ifconfig eth0 22.39.224.18/30
-ifup eth0
 route add default gw 22.39.224.17

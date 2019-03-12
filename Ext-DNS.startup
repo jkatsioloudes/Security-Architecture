@@ -1,5 +1,8 @@
+# External DNS is accessed from both inside and 
+# outside regarding name resolution of external
+# websites.
+
 ifconfig eth0 8.8.8.8/24
-ifup eth0
 route add default gw 8.8.8.1
 
 service dnsmasq start
