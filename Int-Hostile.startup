@@ -2,4 +2,6 @@
 # poison the internal network as far as possible.
 
 ifconfig eth0 10.0.5.3/24
+
+# Defaults to GW-WBS.
 route add default gw 10.0.5.1

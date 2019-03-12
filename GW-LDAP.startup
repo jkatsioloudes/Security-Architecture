@@ -5,4 +5,5 @@
 ifconfig eth0 10.0.10.2/30
 ifconfig eth1 10.0.11.1/30
 
+# Defaults to the Internal Firewall.
 route add default gw 10.0.10.1

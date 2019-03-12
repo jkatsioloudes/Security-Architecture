@@ -1,4 +1,6 @@
 # Staff machine in WMG.
 
 ifconfig eth0 10.0.7.2/24
+
+# Defaults to GW-WMG.
 route add default gw 10.0.7.1

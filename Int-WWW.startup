@@ -1,6 +1,8 @@
 # Internal WWW Server.
 
 ifconfig eth0 10.0.9.3/29
+
+# Defaults to Gateway of Internal Servers.
 route add default gw 10.0.9.1
 
 a2enmod ssl

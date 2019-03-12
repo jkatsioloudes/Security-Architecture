@@ -1,4 +1,6 @@
 # Staff machine in WBS.
 
 ifconfig eth0 10.0.5.2/24
+
+# Defaults to GW-WBS.
 route add default gw 10.0.5.1

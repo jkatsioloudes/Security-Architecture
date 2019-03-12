@@ -8,6 +8,7 @@ ifconfig eth1 172.16.0.1/30
 ifconfig eth2 10.0.0.1/30
 ifconfig eth3 192.168.0.1/30
 
+
 # Adding networks that are accessible through
 # directly connected gateways including the 
 # Internet, DMZ-GW-VPN, DMZ-GW-Mail and Int-FW.
@@ -15,17 +16,26 @@ ifconfig eth3 192.168.0.1/30
 # Ext-Office, Ext-DNS, Ext-WWW, OpenVPN, Mail
 # and GW-Staff. 
 
-route add -net 66.66.66.0/30 gw 137.205.0.2
-route add -net 22.39.224.16/30 gw 137.205.0.2
-route add -net 8.8.8.0/24 gw 137.205.0.2
-route add -net 201.224.0.0/16 gw 137.205.0.2
+# OpenVPN Server accessible though the DMZ Gateway VPN.
 route add -net 172.16.1.0/30 gw 172.16.0.2
+
+# Mail Server accessible though the DMZ Gateway Mail.
 route add -net 192.168.1.0/30 gw 192.168.0.2
-route add -net 10.0.3.0/30 gw 10.0.0.2
+
+# WBS LAN accessible through the Internal Firewall.
+route add -net 10.0.5.0/24 gw 10.0.0.2
+
+# WMG LAN accessible through the Internal Firewall.
+route add -net 10.0.7.0/24 gw 10.0.0.2
+
+# Public Internet is the Default route of the External Firewall.
+route add default gw 137.205.0.2
+
 
 # Firewall Rules
 
 iptables -t nat -A POSTROUTING -o eth0 -j SNAT --to-source 137.205.0.1
+
 
 # Squid Proxy
 

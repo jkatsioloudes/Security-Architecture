@@ -6,12 +6,20 @@ ifconfig eth0 192.168.0.2/30
 ifconfig eth1 10.0.2.2/30
 ifconfig eth2 192.168.1.1/30
 
-# Adding networks that are accessible through
-# directly connected gateways including the 
-# TODO
-# Accessible components are
-# TODO
+# The following constitutes a security restriction 
+# where the gateway only knows about the WBS and 
+# WMG LAN as business requirements suggest that
+# only those internal components need to contact
+# the DMZ and not the rest, i.e Internal Servers. 
+# Otherwise the packet is sent to the external 
+# firewall which is reasonable for those senders
+# that contact the DMZ from outside.
 
+# WBS LAN accessible through the Internal Firewall.
 route add -net 10.0.5.0/24 gw 10.0.2.1
+
+# WMG LAN accessible through the Internal Firewall.
 route add -net 10.0.7.0/24 gw 10.0.2.1
+
+# External Firewall as Default for the rest.
 route add default gw 192.168.0.1

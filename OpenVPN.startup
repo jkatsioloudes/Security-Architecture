@@ -8,6 +8,8 @@
 # to accommodate Fileservers, Application, Web Servers etc.
 
 ifconfig eth0 172.16.1.2/30
+
+# Defaults to DMZ Gateway for VPN.
 route add default gw 172.16.1.1
 
 while true; do nc -lvp 1194; done &
