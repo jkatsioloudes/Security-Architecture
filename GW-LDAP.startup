@@ -1,0 +1,8 @@
+# Gateway LDAP is responsible to provide LDAP-type 
+# information to internal users including credentials
+# and indexed email addresses.
+
+ifconfig eth0 10.0.10.2/30
+ifconfig eth1 10.0.11.1/30
+
+route add default gw 10.0.10.1
