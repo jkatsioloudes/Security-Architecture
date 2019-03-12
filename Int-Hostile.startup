@@ -1,0 +1,5 @@
+# Insider threat in WBS with intent to move and
+# poison the internal network as far as possible.
+
+ifconfig eth0 10.0.5.3/24
+route add default gw 10.0.5.1

@@ -1,3 +1,4 @@
-ifconfig eth0 137.205.81.121/16
-ifup eth0
-route add default gw 137.205.157.254
+# Staff machine in WBS.
+
+ifconfig eth0 10.0.5.2/24
+route add default gw 10.0.5.1

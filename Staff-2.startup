@@ -1,3 +1,4 @@
-ifconfig eth0 137.205.69.201/16
-ifup eth0
-route add default gw 137.205.157.254
+# Staff machine in WMG.
+
+ifconfig eth0 10.0.7.2/24
+route add default gw 10.0.7.1
