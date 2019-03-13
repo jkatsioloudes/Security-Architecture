@@ -69,7 +69,9 @@ iptables -A FORWARD -i eth1 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -
 
 iptables -t nat -A PREROUTING -i eth0 -p tcp --match multiport --dports 25,587,993 -m comment --comment "Routes incoming packets addressed to the Mail Server" -j DNAT --to-destination 192.168.1.2
 
-iptables -A FORWARD -i eth0 -o eth3 -p tcp --syn --match multiport --dports 25,587,993 -m conntrack --ctstate NEW -m comment --comment "Accept new Mail connection initiation from anywhere" -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth3 -s 10.0.5.0/24 -p tcp --syn --match multiport --dports 25,587,993 -m conntrack --ctstate NEW -m comment --comment "Accept new Mail connection initiation from WBS LAN" -j ACCEPT
+
+iptables -A FORWARD -i eth0 -o eth3 -s 10.0.7.0/24 -p tcp --syn --match multiport --dports 25,587,993 -m conntrack --ctstate NEW -m comment --comment "Accept new Mail connection initiation from WMG LAN" -j ACCEPT
 
 iptables -A FORWARD -i eth0 -o eth3 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Mail connection" -j ACCEPT
 
@@ -80,17 +82,21 @@ iptables -A FORWARD -i eth3 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -
 
 # UDP is implemented in a bidirectional manner due to the nature of LDAP (Reference: https://serverfault.com/questions/828769/need-iptables-port-forwarding-for-bidirectional-udp)
 
-iptables -t nat -A PREROUTING -i eth0 -s 10.0.5.0/24 -p udp --dport 389 -m comment --comment "Makes a UDP connection behave like a TCP with bidirectional capabilities" -j MARK --set-mark 0x1
+iptables -t nat -A PREROUTING -i eth0 -p udp --dport 389 -m comment --comment "Makes a UDP connection behave like a TCP with bidirectional capabilities" -j MARK --set-mark 0x1
 
 iptables -t nat -A PREROUTING -p udp -m mark --mark 0x1 -m comment --comment "Routes incoming UDP packets addressed to the internal LDAP Server" -j DNAT --to-destination 10.0.11.2:389
 
-iptables -A FORWARD -i eth0 -o eth4 -p udp --dport 389 -m comment --comment "Accept new UDP LDAP connection" -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth4 -s 10.0.5.0/24 -p udp --dport 389 -m comment --comment "Accept new UDP LDAP connection from WMB LAN" -j ACCEPT
+
+iptables -A FORWARD -i eth0 -o eth4 -s 10.0.7.0/24 -p udp --dport 389 -m comment --comment "Accept new UDP LDAP connection from WMG LAN" -j ACCEPT
 
 # TCP follows.
 
 iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 389 -m comment --comment "Routes incoming TCP packets addressed to the internal LDAP Server" -j DNAT --to-destination 10.0.11.2
 
-iptables -A FORWARD -i eth0 -o eth4 -p tcp --syn --dport 389 -m conntrack --ctstate NEW -m comment --comment "Accept new TCP LDAP connection initiations" -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth4 -s 10.0.5.0/24 -p tcp --syn --dport 389 -m conntrack --ctstate NEW -m comment --comment "Accept new TCP LDAP connection initiations from WBS LAN" -j ACCEPT
+
+iptables -A FORWARD -i eth0 -o eth4 -s 10.0.7.0/24 -p tcp --syn --dport 389 -m conntrack --ctstate NEW -m comment --comment "Accept new TCP LDAP connection initiations from WMG LAN" -j ACCEPT
 
 # Established, Related 
 
