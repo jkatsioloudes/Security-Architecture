@@ -32,9 +32,33 @@ route add -net 10.0.7.0/24 gw 10.0.0.2
 route add default gw 137.205.0.2
 
 
-# Firewall Rules
+# Firewall Rules for the External Firewall
+
+# RULE 1 -- Default Policies are set to DROP towards whitelisting.
+
+iptables -t filter -P INPUT DROP
+iptables -t filter -P OUTPUT DROP
+iptables -t filter -P FORWARD DROP
+
+
+# RULE 2 -- SNAT for exiting packets.
+
+# Source NATTing so that packets exiting the External Firewall will 
+# inherit the public IP Address of our organisation and prevent the
+# the disclosure of private IP addresses.
 
 iptables -t nat -A POSTROUTING -o eth0 -j SNAT --to-source 137.205.0.1
+
+
+# RULE 3 -- DNAT for DMZ's OpenVPN Server alongside FORWARD chain stateful rules.
+
+iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 1194 -j DNAT --to-destination 172.16.1.2
+
+iptables -A FORWARD -i eth0 -o eth1 -s 22.39.224.16/30 -p tcp --syn --dport 1194 -m conntrack --ctstate NEW -j ACCEPT
+
+iptables -A FORWARD -i eth0 -o eth1 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+iptables -A FORWARD -i eth1 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
 
 # Squid Proxy
