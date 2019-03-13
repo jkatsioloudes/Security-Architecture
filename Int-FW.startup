@@ -13,34 +13,28 @@ ifconfig eth5 10.0.8.1/30
 # Adding networks that are accessible through
 # directly connected gateways.
 
-# OpenVPN Server accessible though the DMZ Gateway VPN.
+# OpenVPN Server accessible through the DMZ Gateway VPN.
 route add -net 172.16.1.0/30 gw 10.0.1.2
 
-# Mail Server accessible though the DMZ Gateway Mail.
+# Mail Server accessible through the DMZ Gateway Mail.
 route add -net 192.168.1.0/30 gw 10.0.2.2
 
-# Attaches GW-WBS Network - necessary to allow Pong back
-# from an initial Ping.
+# Attaches GW-WBS.
 route add -net 10.0.4.0/30 gw 10.0.3.2
 
-# Attaches GW-WMG Network - necessary to allow Pong back
-# from an initial Ping.
+# Attaches GW-WMG.
 route add -net 10.0.6.0/30 gw 10.0.3.2
 
-# Attaches WBS LAN Network - necessary to allow Pong back
-# from an initial Ping.
+# Attaches WBS LAN.
 route add -net 10.0.5.0/24 gw 10.0.3.2
 
-# Attaches WMG LAN Network - necessary to allow Pong back
-# from an initial Ping.
+# Attaches WMG LAN.
 route add -net 10.0.7.0/24 gw 10.0.3.2
 
-# Attaches Internal Servers Network - necessary to allow Pong
-# back from an initial Ping.
+# Attaches Internal Servers LAN.
 route add -net 10.0.9.0/29 gw 10.0.8.2
 
-# Attaches LDAP Network - necessary to allow Pong back
-# from an initial Ping.
+# Attaches LDAP LAN.
 route add -net 10.0.11.0/30 gw 10.0.10.2
 
 # External Firewall as Default for the rest.
