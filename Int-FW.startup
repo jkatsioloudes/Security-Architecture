@@ -75,3 +75,26 @@ iptables -A FORWARD -i eth0 -o eth3 -m conntrack --ctstate ESTABLISHED,RELATED -
 
 iptables -A FORWARD -i eth3 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Mail connection" -j ACCEPT
 
+
+# RULE 4 -- DNAT for Internal LDAP Server alongside FORWARD chain stateful rules for both UDP and TCP.
+
+# UDP is implemented in a bidirectional manner due to the nature of LDAP (Reference: https://serverfault.com/questions/828769/need-iptables-port-forwarding-for-bidirectional-udp)
+
+iptables -t nat -A PREROUTING -i eth0 -s 10.0.5.0/24 -p udp --dport 389 -m comment --comment "Makes a UDP connection behave like a TCP with bidirectional capabilities" -j MARK --set-mark 0x1
+
+iptables -t nat -A PREROUTING -p udp -m mark --mark 0x1 -m comment --comment "Routes incoming UDP packets addressed to the internal LDAP Server" -j DNAT --to-destination 10.0.11.2:389
+
+iptables -A FORWARD -i eth0 -o eth4 -p udp --dport 389 -m comment --comment "Accept new UDP LDAP connection" -j ACCEPT
+
+# TCP follows.
+
+iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 389 -m comment --comment "Routes incoming TCP packets addressed to the internal LDAP Server" -j DNAT --to-destination 10.0.11.2
+
+iptables -A FORWARD -i eth0 -o eth4 -p tcp --syn --dport 389 -m conntrack --ctstate NEW -m comment --comment "Accept new TCP LDAP connection initiations" -j ACCEPT
+
+# Established, Related 
+
+iptables -A FORWARD -i eth0 -o eth4 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful LDAP connection" -j ACCEPT
+
+iptables -A FORWARD -i eth4 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful LDAP connection" -j ACCEPT
+
