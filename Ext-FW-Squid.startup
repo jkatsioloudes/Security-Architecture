@@ -74,6 +74,17 @@ iptables -A FORWARD -i eth0 -o eth3 -m conntrack --ctstate ESTABLISHED,RELATED -
 iptables -A FORWARD -i eth3 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Mail connection" -j ACCEPT
 
 
+# RULE 5 -- Internal users should connect to websites residing in the public Internet (Ext-WWW).
+
+iptables -A FORWARD -i eth2 -o eth0 -s 10.0.5.0/24 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "External WWW Access to WBS LAN" -j ACCEPT
+
+iptables -A FORWARD -i eth2 -o eth0 -s 10.0.7.0/24 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "External WWW Access to WMG LAN" -j ACCEPT
+
+iptables -A FORWARD -i eth0 -o eth2 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful WWW Connection" -j ACCEPT
+
+iptables -A FORWARD -i eth2 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful WWW Connection" -j ACCEPT
+
+
 # Squid Proxy
 
 touch /var/log/squid/access.log
