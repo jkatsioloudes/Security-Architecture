@@ -116,3 +116,15 @@ iptables -A FORWARD -i eth0 -s 10.0.7.0/24 -p tcp --syn --dport 80 -m conntrack 
 iptables -A FORWARD -i eth0 -o eth2 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful WWW Connection" -j ACCEPT
 
 iptables -A FORWARD -i eth2 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful WWW Connection" -j ACCEPT
+
+
+# RULE 6 -- Internal users should connect to internal websites via internal WWW (Int-WWW).
+
+iptables -A FORWARD -i eth0 -s 10.0.5.0/24 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "Internal WWW Access to WBS LAN" -j ACCEPT
+
+iptables -A FORWARD -i eth0 -s 10.0.7.0/24 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "Internal WWW Access to WMG LAN" -j ACCEPT
+
+iptables -A FORWARD -i eth0 -o eth5 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful WWW Connection" -j ACCEPT
+
+iptables -A FORWARD -i eth5 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful WWW Connection" -j ACCEPT
+
