@@ -47,18 +47,18 @@ iptables -t filter -P FORWARD DROP
 # inherit the public IP Address of our organisation and prevent the
 # the disclosure of private IP addresses.
 
-iptables -t nat -A POSTROUTING -o eth0 -j SNAT --to-source 137.205.0.1
+iptables -t nat -A POSTROUTING -o eth0 -m comment --comment "External Firewall's Public IP becomes exiting packets source address" -j SNAT --to-source 137.205.0.1
 
 
 # RULE 3 -- DNAT for DMZ's OpenVPN Server alongside FORWARD chain stateful rules.
 
-iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 1194 -j DNAT --to-destination 172.16.1.2
+iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 1194 -m comment --comment "Routes incoming packets addressed to the VPN" -j DNAT --to-destination 172.16.1.2
 
-iptables -A FORWARD -i eth0 -o eth1 -s 22.39.224.16/30 -p tcp --syn --dport 1194 -m conntrack --ctstate NEW -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth1 -s 22.39.224.16/30 -p tcp --syn --dport 1194 -m conntrack --ctstate NEW -m comment --comment "Only accept VPN connection initiations from the Ext-Office range" -j ACCEPT
 
-iptables -A FORWARD -i eth0 -o eth1 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth1 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful VPN connection" -j ACCEPT
 
-iptables -A FORWARD -i eth1 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+iptables -A FORWARD -i eth1 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful VPN connection" -j ACCEPT
 
 
 # Squid Proxy
