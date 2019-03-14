@@ -145,3 +145,10 @@ iptables -A FORWARD -i eth0 -o eth2 -s 10.0.7.0/24 -p udp --dport 53 -m comment 
 iptables -A FORWARD -i eth0 -o eth5 -s 10.0.5.0/24 -p udp --dport 53 -m comment --comment "Internal DNS Access from WBS LAN" -j ACCEPT
 
 iptables -A FORWARD -i eth0 -o eth5 -s 10.0.7.0/24 -p udp --dport 53 -m comment --comment "Internal DNS Access from WMG LAN" -j ACCEPT
+
+
+# RULE 9 -- Internal users should be able to ping the DMZ and internal servers and not the other way around.
+
+iptables -A FORWARD -i eth0 -p icmp --icmp-type echo-request -j ACCEPT
+
+iptables -A FORWARD ! -i eth0 -p icmp --icmp-type echo-reply -j ACCEPT
