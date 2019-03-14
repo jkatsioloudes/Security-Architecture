@@ -94,6 +94,13 @@ iptables -A FORWARD -i eth2 -o eth0 -s 10.0.5.0/24 -p udp --dport 53 -m comment 
 iptables -A FORWARD -i eth2 -o eth0 -s 10.0.7.0/24 -p udp --dport 53 -m comment --comment "External DNS Access from WMG LAN" -j ACCEPT
 
 
+# RULE 7 -- Allow Pings (and Replies) from outside to the external firewall.
+
+iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
+
+iptables -A OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
+
+
 # Squid Proxy
 
 touch /var/log/squid/access.log
