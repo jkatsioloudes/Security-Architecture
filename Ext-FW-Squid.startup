@@ -80,7 +80,7 @@ iptables -A FORWARD -i eth2 -o eth0 -s 10.0.5.0/24 -p tcp --syn --dport 80 -m co
 
 iptables -A FORWARD -i eth2 -o eth0 -s 10.0.7.0/24 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "External WWW Access to WMG LAN" -j ACCEPT
 
-# The following two rules are also used for RULE 6 in order to make it stateful.
+# The following two rules are also used for RULE 6 to make the connection stateful.
 
 iptables -A FORWARD -i eth0 -o eth2 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful WWW Connection" -j ACCEPT
 

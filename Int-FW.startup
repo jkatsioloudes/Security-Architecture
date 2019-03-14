@@ -113,7 +113,7 @@ iptables -A FORWARD -i eth0 -o eth2 -s 10.0.5.0/24 -p tcp --syn --dport 80 -m co
 
 iptables -A FORWARD -i eth0 -o eth2 -s 10.0.7.0/24 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "External WWW Access to WMG LAN" -j ACCEPT
 
-# The following two rules are also used for RULE 7 to make it stateful.
+# The following two rules are also used for RULE 7 to make the connection stateful.
 
 iptables -A FORWARD -i eth0 -o eth2 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful WWW Connection" -j ACCEPT
 
@@ -126,6 +126,8 @@ iptables -A FORWARD -i eth0 -o eth5 -s 10.0.5.0/24 -p tcp --syn --dport 80 -m co
 
 iptables -A FORWARD -i eth0 -o eth5 -s 10.0.7.0/24 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "Internal WWW Access to WMG LAN" -j ACCEPT
 
+# The following two rules are also used for RULE 8 to make the connection stateful.
+
 iptables -A FORWARD -i eth0 -o eth5 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful WWW Connection" -j ACCEPT
 
 iptables -A FORWARD -i eth5 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful WWW Connection" -j ACCEPT
@@ -137,3 +139,9 @@ iptables -A FORWARD -i eth0 -o eth2 -s 10.0.5.0/24 -p udp --dport 53 -m comment 
 
 iptables -A FORWARD -i eth0 -o eth2 -s 10.0.7.0/24 -p udp --dport 53 -m comment --comment "External DNS Access from WMG LAN" -j ACCEPT
 
+
+# RULE 8 -- Internal users should connect to Internal DNS (Int-DNS).
+
+iptables -A FORWARD -i eth0 -o eth5 -s 10.0.5.0/24 -p udp --dport 53 -m comment --comment "Internal DNS Access from WBS LAN" -j ACCEPT
+
+iptables -A FORWARD -i eth0 -o eth5 -s 10.0.7.0/24 -p udp --dport 53 -m comment --comment "Internal DNS Access from WMG LAN" -j ACCEPT
