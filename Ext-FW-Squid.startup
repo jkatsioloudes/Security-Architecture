@@ -76,9 +76,15 @@ iptables -A FORWARD -i eth3 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -
 
 # RULE 5 -- Internal users should connect to websites residing in the public Internet (Ext-WWW).
 
-iptables -A FORWARD -i eth2 -o eth0 -s 10.0.5.0/24 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "External WWW Access to WBS LAN" -j ACCEPT
+#iptables -A FORWARD -i eth2 -o eth0 -s 10.0.5.0/24 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "External WWW Access to WBS LAN" -j ACCEPT
 
-iptables -A FORWARD -i eth2 -o eth0 -s 10.0.7.0/24 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "External WWW Access to WMG LAN" -j ACCEPT
+#iptables -A FORWARD -i eth2 -o eth0 -s 10.0.7.0/24 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "External WWW Access to WMG LAN" -j ACCEPT
+
+
+
+iptables -A FORWARD -i eth2 -o eth0 -s 10.0.0.2 -p tcp --dport 80 -j ACCEPT
+
+
 
 # The following two rules are also used for RULE 6 to make the connection stateful.
 
@@ -106,22 +112,22 @@ iptables -A OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
 # https://www.tecmint.com/configure-squid-server-in-linux/
 
 
-iptables -t nat -A PREROUTING -i eth2 -p tcp --dport 80 -j REDIRECT --to-port 3128
+#iptables -t nat -A PREROUTING -i eth2 -p tcp --dport 80 -j REDIRECT --to-port 3128
 
-iptables -A INPUT -i eth2 -s 10.0.5.0/24 -p tcp --dport 3128 -j ACCEPT
+#iptables -A INPUT -i eth2 -s 10.0.5.0/24 -p tcp --dport 3128 -j ACCEPT
 
-iptables -A INPUT -i eth2 -s 10.0.7.0/24 -p tcp --dport 3128 -j ACCEPT
+#iptables -A INPUT -i eth2 -s 10.0.7.0/24 -p tcp --dport 3128 -j ACCEPT
 
-iptables -A INPUT -i eth0 -s 201.224.0.0/16 -p tcp -j ACCEPT
+#iptables -A INPUT -i eth0 -s 201.224.0.0/16 -p tcp -j ACCEPT
 
-iptables -A OUTPUT -p tcp -j ACCEPT
+#iptables -A OUTPUT -p tcp -j ACCEPT
 
 
 # SQUID LOG
 
-touch /var/log/squid/access.log
-chmod 777 /var/log/squid/access.log
+#touch /var/log/squid/access.log
+#chmod 777 /var/log/squid/access.log
 
-mkdir /var/cache/squid
+#mkdir /var/cache/squid
 
-service squid start
+#service squid start
