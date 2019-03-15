@@ -91,9 +91,9 @@ iptables -A FORWARD -i eth2 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -
 
 # RULE 6 -- Internal users should connect to External DNS that resides in the public Internet (Ext-DNS).
 
-iptables -A FORWARD -i eth2 -o eth0 -s 10.0.5.0/24 -p udp --dport 53 -m comment --comment "External DNS Access from WBS LAN" -j ACCEPT
+iptables -A FORWARD -i eth2 -o eth0 -s 10.0.5.0/24 -d 8.8.8.8 -p udp --dport 53 -m comment --comment "External DNS Access from WBS LAN" -j ACCEPT
 
-iptables -A FORWARD -i eth2 -o eth0 -s 10.0.7.0/24 -p udp --dport 53 -m comment --comment "External DNS Access from WMG LAN" -j ACCEPT
+iptables -A FORWARD -i eth2 -o eth0 -s 10.0.7.0/24 -d 8.8.8.8 -p udp --dport 53 -m comment --comment "External DNS Access from WMG LAN" -j ACCEPT
 
 
 # RULE 7 -- Allow Pings (and Replies) from outside to the external firewall.
