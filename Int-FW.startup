@@ -149,9 +149,9 @@ iptables -A FORWARD -i eth0 -o eth5 -s 10.0.7.0/24 -p udp --dport 53 -m comment 
 
 # RULE 9 -- Internal users should be able to ping the DMZ and internal servers and not the other way around.
 
-iptables -A FORWARD -i eth0 -p icmp --icmp-type echo-request -j ACCEPT
+iptables -A FORWARD -i eth0 -p icmp --icmp-type echo-request -m comment --comment "Internal clients to Ping internal and DMZ servers" -j ACCEPT
 
-iptables -A FORWARD ! -i eth0 -p icmp --icmp-type echo-reply -j ACCEPT
+iptables -A FORWARD ! -i eth0 -p icmp --icmp-type echo-reply -m comment --comment "Pong response from internal clients and DMZ servers to internal clients" -j ACCEPT
 
 
 # RULE 10 -- Squid Proxy for Proxying, Caching and Filtering.
@@ -160,16 +160,18 @@ iptables -A FORWARD ! -i eth0 -p icmp --icmp-type echo-reply -j ACCEPT
 # https://cottagedata.com//security/squid/squid.html
 # https://www.tecmint.com/configure-squid-server-in-linux/
 
+# Redirection to transparent proxy.  Transparent is chosen to prevent installing corresponding
+# settings to all client machines. 
 
-iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 3128
+iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 -m comment --comment "Redirection to transparent proxy" -j REDIRECT --to-port 3128
 
-iptables -A INPUT -i eth0 -s 10.0.5.0/24 -p tcp --dport 3128 -j ACCEPT
+iptables -A INPUT -i eth0 -s 10.0.5.0/24 -p tcp --dport 3128 -m comment --comment "WBS LAN external internet access" -j ACCEPT
 
-iptables -A INPUT -i eth0 -s 10.0.7.0/24 -p tcp --dport 3128 -j ACCEPT
+iptables -A INPUT -i eth0 -s 10.0.7.0/24 -p tcp --dport 3128 -m comment --comment "WMG LAN external internet access" -j ACCEPT
 
-iptables -A INPUT -i eth2 -s 201.224.0.0/16 -p tcp -j ACCEPT
+iptables -A INPUT -i eth2 -s 201.224.0.0/16 -p tcp -m comment --comment "Response from Ext-WWW to transparent proxy" -j ACCEPT
 
-iptables -A OUTPUT -p tcp -j ACCEPT
+iptables -A OUTPUT -p tcp -m comment --comment "Squid proxy redirection forward continues" -j ACCEPT
 
 
 # SQUID LOG
