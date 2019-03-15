@@ -1,7 +1,7 @@
-# External Firewall with Squid Proxy responsible
-# for SNAT and DNAT. It acts as the first layer of
-# defence and filters packets before they enter
-# the DMZ.
+# External Firewall responsible for SNAT as it is the last layer when packets
+# are broadcasted out and DNAT towards DMZ servers as it is the first layer of
+# defence for incoming packets.  Outsiders only know the eth0 public IP address
+# of Warwick and nothing about the internals.  
 
 ifconfig eth0 137.205.0.1/16
 ifconfig eth1 172.16.0.1/30

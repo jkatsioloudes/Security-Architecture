@@ -1,6 +1,5 @@
-# Internal Firewall is responsible to filter all the
-# inside traffic, allow internet access and provide
-# access to the DMZ components.
+# Internal Firewall with Squid Proxy capabilities is responsible to filter all
+# inside traffic, allow internet access and provide access to the DMZ components.
 
 ifconfig eth0 10.0.3.1/30
 ifconfig eth1 10.0.1.1/30
@@ -154,7 +153,8 @@ iptables -A FORWARD -i eth0 -p icmp --icmp-type echo-request -m comment --commen
 iptables -A FORWARD ! -i eth0 -p icmp --icmp-type echo-reply -m comment --comment "Pong response from internal clients and DMZ servers to internal clients" -j ACCEPT
 
 
-# RULE 10 -- Squid Proxy for Proxying, Caching and Filtering.
+# RULE 10 -- SQUID PROXY for Logging, Caching and Filtering for both external and internal servers
+# and this is why this is placed in the internal firewall and not in the external.
 
 # Squid Proxy
 # https://cottagedata.com//security/squid/squid.html
@@ -165,11 +165,21 @@ iptables -A FORWARD ! -i eth0 -p icmp --icmp-type echo-reply -m comment --commen
 
 iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 -m comment --comment "Redirection to transparent proxy" -j REDIRECT --to-port 3128
 
-iptables -A INPUT -i eth0 -s 10.0.5.0/24 -p tcp --dport 3128 -m comment --comment "WBS LAN external internet access" -j ACCEPT
+# Internal machines from WMG and WBS LAN connect to the external and internal internet without
+# any impact on user experience, caching makes responses much faster for all users and does not
+# depend on department since it is placed in the internal firewall.
 
-iptables -A INPUT -i eth0 -s 10.0.7.0/24 -p tcp --dport 3128 -m comment --comment "WMG LAN external internet access" -j ACCEPT
+iptables -A INPUT -i eth0 -s 10.0.5.0/24 -p tcp --dport 3128 -m comment --comment "WBS LAN external/internal internet access" -j ACCEPT
+
+iptables -A INPUT -i eth0 -s 10.0.7.0/24 -p tcp --dport 3128 -m comment --comment "WMG LAN external/internal internet access" -j ACCEPT
 
 iptables -A INPUT -i eth2 -s 201.224.0.0/16 -p tcp -m comment --comment "Response from Ext-WWW to transparent proxy" -j ACCEPT
+
+# Allows internal WWW (Int-WWW) connections to be cached as well.
+
+iptables -A INPUT -i eth5 -s 10.0.9.3 -p tcp -m comment --comment "Response from Int-WWW to transparent proxy" -j ACCEPT
+
+# The output of the internal firewall after proxying is then forwarded.
 
 iptables -A OUTPUT -p tcp -m comment --comment "Squid proxy redirection forward continues" -j ACCEPT
 
