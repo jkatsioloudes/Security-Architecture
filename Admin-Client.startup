@@ -1,0 +1,12 @@
+# Client Admin is responsible for the administration of
+# all internal servers. Normally more than one would be
+# used for better isolation, each having different
+# access rights and responsibilities, however for the 
+# purpose of this PMA, it is assumed that a single
+# client machine is provided ssh capabilities to all
+# servers.
+
+ifconfig eth0 10.0.13.2/30
+
+# Default to the Gateway LDAP.
+route add default gw 10.0.13.1

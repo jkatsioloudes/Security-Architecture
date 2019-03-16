@@ -1,0 +1,12 @@
+# Gateway Admin is responsible to host Admin-Clients,
+# normally more than one for better isolation, each
+# having different access rights and responsibilities.
+# For the sake of this PMA, it is assumed that a single
+# client machine is provided ssh capabilities to all
+# servers.
+
+ifconfig eth0 10.0.12.2/30
+ifconfig eth1 10.0.13.1/30
+
+# Defaults to the Internal Firewall.
+route add default gw 10.0.12.1

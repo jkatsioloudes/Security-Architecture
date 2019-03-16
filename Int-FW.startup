@@ -9,6 +9,7 @@ ifconfig eth2 10.0.0.2/30
 ifconfig eth3 10.0.2.1/30
 ifconfig eth4 10.0.10.1/30
 ifconfig eth5 10.0.8.1/30
+ifconfig eth6 10.0.12.1/30
 
 
 # Adding networks that are accessible through
@@ -37,6 +38,9 @@ route add -net 10.0.9.0/29 gw 10.0.8.2
 
 # Attaches LDAP LAN.
 route add -net 10.0.11.0/30 gw 10.0.10.2
+
+# Attaches Admin LAN.
+route add -net 10.0.13.0/30 gw 10.0.12.2
 
 # External Firewall as Default for the rest.
 route add default gw 10.0.0.1
@@ -155,7 +159,21 @@ iptables -A FORWARD -i eth0 -p icmp --icmp-type echo-request -m comment --commen
 iptables -A FORWARD ! -i eth0 -p icmp --icmp-type echo-reply -m comment --comment "Pong response from internal clients and DMZ servers to internal clients" -j ACCEPT
 
 
-# RULE 10 -- SQUID PROXY for Logging, Caching and Filtering for both external and internal servers
+# RULE 10 -- Admins should be able to ping the DMZ and internal servers and not the other way around.
+
+iptables -A FORWARD -i eth6 -p icmp --icmp-type echo-request -m comment --comment "Admin clients to Ping internal and DMZ servers" -j ACCEPT
+
+iptables -A FORWARD ! -i eth6 -p icmp --icmp-type echo-reply -m comment --comment "Pong response from internal clients and DMZ servers to Admin clients" -j ACCEPT
+
+
+# RULE 11 -- Internal Firewall receives and replies to pings. 
+
+iptables -A INPUT -p icmp --icmp-type echo-request -m comment --comment "Ping to Int-FW" -j ACCEPT
+
+iptables -A OUTPUT -p icmp --icmp-type echo-reply -m comment --comment "Pong from Int-FW" -j ACCEPT
+
+
+# RULE 12 -- SQUID PROXY for Logging, Caching and Filtering for both external and internal servers
 # and this is why this is placed in the internal firewall and not in the external.
 
 # Squid Proxy

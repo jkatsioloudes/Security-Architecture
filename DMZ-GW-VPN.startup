@@ -24,6 +24,9 @@ route add -net 10.0.5.0/24 gw 10.0.1.1
 # Dep-B LAN accessible through the Internal Firewall.
 route add -net 10.0.7.0/24 gw 10.0.1.1
 
+# Admin LAN accessible through the Internal Firewall.
+route add -net 10.0.13.0/30 gw 10.0.1.1
+
 # External Firewall as Default for the rest.
 route add default gw 172.16.0.1
 
