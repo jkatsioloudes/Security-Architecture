@@ -212,3 +212,39 @@ chmod 777 /var/log/squid/access.log
 mkdir /var/cache/squid
 
 service squid start
+
+
+# RULE 13 -- SSH forwarding including misdirection ports and port knocking legit ports.
+
+# Misdirection ports.
+
+iptables -A FORWARD -i eth6 -p tcp --syn --dport 22456 -m conntrack --ctstate NEW -j ACCEPT
+
+iptables -A FORWARD -i eth6 -p tcp --syn --dport 38964 -m conntrack --ctstate NEW -j ACCEPT
+
+# The actual sequence port is 1887.
+
+iptables -A FORWARD -i eth6 -p tcp --syn --dport 1887 -m conntrack --ctstate NEW -j ACCEPT
+
+# SSH Port is 36747 and not 22.
+
+iptables -A FORWARD -i eth6 -p tcp --syn --dport 36747 -m conntrack --ctstate NEW -j ACCEPT
+
+# Makes SSH connections stateful between the interfaces of admin and servers.
+
+iptables -A FORWARD -i eth6 -o eth1 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+iptables -A FORWARD -i eth1 -o eth6 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+iptables -A FORWARD -i eth6 -o eth3 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+iptables -A FORWARD -i eth3 -o eth6 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+iptables -A FORWARD -i eth6 -o eth5 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+iptables -A FORWARD -i eth5 -o eth6 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+iptables -A FORWARD -i eth6 -o eth4 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+iptables -A FORWARD -i eth4 -o eth6 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+

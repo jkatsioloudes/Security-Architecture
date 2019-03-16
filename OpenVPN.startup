@@ -13,3 +13,26 @@ ifconfig eth0 172.16.1.2/30
 route add default gw 172.16.1.1
 
 while true; do nc -lvp 1194; done &
+
+# One of the following ports is used for
+# port knocking, the rest are for misdirection.
+
+while true; do nc -lvp 1887; done &
+while true; do nc -lvp 22456; done &
+while true; do nc -lvp 38964; done &
+
+/etc/init.d/ssh start
+
+
+# Port Knocking to 1887 and within 45 seconds ssh through the unconventional port 36747.
+
+# Useful Commands:
+# 1) The server should first have a root password set using the command: "passwd".
+# 2) Knock the port 1887 using: "nmap -Pn --max-retries 0 -p 1887 172.16.1.2". Netcat can be used too.
+# 3) Within 45 seconds, perform the following command from admin: "ssh -p 36747 root@172.16.1.2".
+
+iptables -A INPUT -p tcp --dport 1887 -m recent --set --name portknock
+
+iptables -A INPUT -p tcp --syn --dport 36747 -m recent --rcheck --seconds 45 --name portknock -m conntrack --ctstate NEW -j ACCEPT
+
+iptables -A INPUT -p tcp --syn --dport 36747 -j DROP
