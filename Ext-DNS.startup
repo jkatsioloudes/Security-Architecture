@@ -1,5 +1,5 @@
 # External DNS is accessed from both inside and 
-# outside regarding name resolution of external
+# outside towards the name resolution of external
 # websites.
 
 ifconfig eth0 8.8.8.8/24

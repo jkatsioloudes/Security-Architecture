@@ -1,5 +1,4 @@
-# Gateway WBS is responsible for Warwick's Business
-# School machines.
+# Gateway Dep-A is responsible for Department's A machines.
 
 ifconfig eth0 10.0.4.2/30
 ifconfig eth1 10.0.5.1/24

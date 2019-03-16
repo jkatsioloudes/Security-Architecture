@@ -1,6 +1,6 @@
-# Staff machine in WMG.
+# Staff machine in Dep-B.
 
 ifconfig eth0 10.0.7.2/24
 
-# Defaults to GW-WMG.
+# Defaults to GW-Dep-B.
 route add default gw 10.0.7.1

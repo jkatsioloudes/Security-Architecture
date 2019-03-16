@@ -1,7 +1,7 @@
-# Insider threat in WBS with intent to move and
-# poison the internal network as far as possible.
+# Insider threat in Dep-B with intent to move and
+# poison the internal network as deep as possible.
 
 ifconfig eth0 10.0.5.3/24
 
-# Defaults to GW-WBS.
+# Defaults to GW-Dep-B.
 route add default gw 10.0.5.1

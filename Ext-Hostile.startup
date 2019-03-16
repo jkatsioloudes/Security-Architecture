@@ -1,5 +1,5 @@
 # External Hostile sits in the public Internet and tries to
-# connect with Warwick's LAN and DMZ from outside with
+# connect with WoWser's LAN and DMZ from outside with
 # malicious intent.
 
 ifconfig eth0 66.66.66.2/30

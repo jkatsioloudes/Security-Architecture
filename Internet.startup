@@ -1,6 +1,6 @@
 # Public Internet acts as gateway to facilitate
 # connections from and to Ext-Hostile, Ext-Office,
-# Ext-DNS, Ext-WWW and Ext-FW-Squid.
+# Ext-DNS, Ext-WWW and Ext-FW.
 
 ifconfig eth0 137.205.0.2/16
 ifconfig eth1 22.39.224.17/30

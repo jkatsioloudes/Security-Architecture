@@ -1,5 +1,7 @@
 # Internal Firewall with Squid Proxy capabilities is responsible to filter all
-# inside traffic, allow internet access and provide access to the DMZ components.
+# inside traffic towards internal servers, allow internet and DMZ access.
+# Its primary goal is to act as as a protection shield between the DMZ and
+# the enterprise internal network.
 
 ifconfig eth0 10.0.3.1/30
 ifconfig eth1 10.0.1.1/30
@@ -18,16 +20,16 @@ route add -net 172.16.1.0/30 gw 10.0.1.2
 # Mail Server accessible through the DMZ Gateway Mail.
 route add -net 192.168.1.0/30 gw 10.0.2.2
 
-# Attaches GW-WBS.
+# Attaches GW-Dep-A.
 route add -net 10.0.4.0/30 gw 10.0.3.2
 
-# Attaches GW-WMG.
+# Attaches GW-Dep-B.
 route add -net 10.0.6.0/30 gw 10.0.3.2
 
-# Attaches WBS LAN.
+# Attaches Dep-A LAN.
 route add -net 10.0.5.0/24 gw 10.0.3.2
 
-# Attaches WMG LAN.
+# Attaches Dep-B LAN.
 route add -net 10.0.7.0/24 gw 10.0.3.2
 
 # Attaches Internal Servers LAN.
@@ -51,13 +53,13 @@ iptables -t filter -P FORWARD DROP
 
 # RULE 2 -- DNAT for DMZ's OpenVPN Server alongside FORWARD chain stateful rules.
 
-# Only accepts connections from WBS and WMG IP range to follow the Least Privilege Principle.
+# Only accepts connections from Dep-A and Dep-B IP range to follow the Least Privilege Principle.
 
 iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 1194 -m comment --comment "Routes incoming packets addressed to the VPN" -j DNAT --to-destination 172.16.1.2
 
-iptables -A FORWARD -i eth0 -o eth1 -s 10.0.5.0/24 -d 172.16.1.2 -p tcp --syn --dport 1194 -m conntrack --ctstate NEW -m comment --comment "Only accept VPN connection initiations from the WBS LAN" -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth1 -s 10.0.5.0/24 -d 172.16.1.2 -p tcp --syn --dport 1194 -m conntrack --ctstate NEW -m comment --comment "Only accept VPN connection initiations from the Dep-A LAN" -j ACCEPT
 
-iptables -A FORWARD -i eth0 -o eth1 -s 10.0.7.0/24 -d 172.16.1.2 -p tcp --syn --dport 1194 -m conntrack --ctstate NEW -m comment --comment "Only accept VPN connection initiations from the WMG LAN" -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth1 -s 10.0.7.0/24 -d 172.16.1.2 -p tcp --syn --dport 1194 -m conntrack --ctstate NEW -m comment --comment "Only accept VPN connection initiations from the Dep-B LAN" -j ACCEPT
 
 iptables -A FORWARD -i eth0 -o eth1 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful VPN connection" -j ACCEPT
 
@@ -68,9 +70,9 @@ iptables -A FORWARD -i eth1 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -
 
 iptables -t nat -A PREROUTING -i eth0 -p tcp --match multiport --dports 25,587,993 -m comment --comment "Routes incoming packets addressed to the Mail Server" -j DNAT --to-destination 192.168.1.2
 
-iptables -A FORWARD -i eth0 -o eth3 -s 10.0.5.0/24 -d 192.168.1.2 -p tcp --syn --match multiport --dports 25,587,993 -m conntrack --ctstate NEW -m comment --comment "Accept new Mail connection initiation from WBS LAN" -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth3 -s 10.0.5.0/24 -d 192.168.1.2 -p tcp --syn --match multiport --dports 25,587,993 -m conntrack --ctstate NEW -m comment --comment "Accept new Mail connection initiation from Dep-A LAN" -j ACCEPT
 
-iptables -A FORWARD -i eth0 -o eth3 -s 10.0.7.0/24 -d 192.168.1.2 -p tcp --syn --match multiport --dports 25,587,993 -m conntrack --ctstate NEW -m comment --comment "Accept new Mail connection initiation from WMG LAN" -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth3 -s 10.0.7.0/24 -d 192.168.1.2 -p tcp --syn --match multiport --dports 25,587,993 -m conntrack --ctstate NEW -m comment --comment "Accept new Mail connection initiation from Dep-B LAN" -j ACCEPT
 
 iptables -A FORWARD -i eth0 -o eth3 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Mail connection" -j ACCEPT
 
@@ -87,15 +89,15 @@ iptables -t nat -A PREROUTING -p udp -m mark --mark 0x1 -m comment --comment "Ro
 
 iptables -A FORWARD -i eth0 -o eth4 -s 10.0.5.0/24 -d 10.0.11.2 -p udp --dport 389 -m comment --comment "Accept new UDP LDAP connection from WMB LAN" -j ACCEPT
 
-iptables -A FORWARD -i eth0 -o eth4 -s 10.0.7.0/24 -d 10.0.11.2 -p udp --dport 389 -m comment --comment "Accept new UDP LDAP connection from WMG LAN" -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth4 -s 10.0.7.0/24 -d 10.0.11.2 -p udp --dport 389 -m comment --comment "Accept new UDP LDAP connection from Dep-B LAN" -j ACCEPT
 
 # TCP follows.
 
 iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 389 -m comment --comment "Routes incoming TCP packets addressed to the internal LDAP Server" -j DNAT --to-destination 10.0.11.2
 
-iptables -A FORWARD -i eth0 -o eth4 -s 10.0.5.0/24 -d 10.0.11.2 -p tcp --syn --dport 389 -m conntrack --ctstate NEW -m comment --comment "Accept new TCP LDAP connection initiations from WBS LAN" -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth4 -s 10.0.5.0/24 -d 10.0.11.2 -p tcp --syn --dport 389 -m conntrack --ctstate NEW -m comment --comment "Accept new TCP LDAP connection initiations from Dep-A LAN" -j ACCEPT
 
-iptables -A FORWARD -i eth0 -o eth4 -s 10.0.7.0/24 -d 10.0.11.2 -p tcp --syn --dport 389 -m conntrack --ctstate NEW -m comment --comment "Accept new TCP LDAP connection initiations from WMG LAN" -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth4 -s 10.0.7.0/24 -d 10.0.11.2 -p tcp --syn --dport 389 -m conntrack --ctstate NEW -m comment --comment "Accept new TCP LDAP connection initiations from Dep-B LAN" -j ACCEPT
 
 # Established, Related 
 
@@ -108,9 +110,9 @@ iptables -A FORWARD -i eth4 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -
 
 # This is achieved by forwarding all port 80 packets towards the external firewall. The destination IP address is not specified assuming that websites in the public Internet can reside in any IP address.
 
-iptables -A FORWARD -i eth0 -o eth2 -s 10.0.5.0/24 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "External WWW Access to WBS LAN" -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth2 -s 10.0.5.0/24 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "External WWW Access to Dep-A LAN" -j ACCEPT
 
-iptables -A FORWARD -i eth0 -o eth2 -s 10.0.7.0/24 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "External WWW Access to WMG LAN" -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth2 -s 10.0.7.0/24 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "External WWW Access to Dep-B LAN" -j ACCEPT
 
 # The following two rules are also used for RULE 7 to make the connection stateful.
 
@@ -121,9 +123,9 @@ iptables -A FORWARD -i eth2 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -
 
 # RULE 6 -- Internal users should connect to internal websites via internal WWW (Int-WWW).
 
-iptables -A FORWARD -i eth0 -o eth5 -s 10.0.5.0/24 -d 10.0.9.3 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "Internal WWW Access to WBS LAN" -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth5 -s 10.0.5.0/24 -d 10.0.9.3 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "Internal WWW Access to Dep-A LAN" -j ACCEPT
 
-iptables -A FORWARD -i eth0 -o eth5 -s 10.0.7.0/24 -d 10.0.9.3 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "Internal WWW Access to WMG LAN" -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth5 -s 10.0.7.0/24 -d 10.0.9.3 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "Internal WWW Access to Dep-B LAN" -j ACCEPT
 
 # The following two rules are also used for RULE 8 to make the connection stateful.
 
@@ -134,16 +136,16 @@ iptables -A FORWARD -i eth5 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -
 
 # RULE 7 -- Internal users should connect to External DNS that resides in the public Internet (Ext-DNS).  The destination address is specified to prevent attacks such as DNS poisoning.
 
-iptables -A FORWARD -i eth0 -o eth2 -s 10.0.5.0/24 -d 8.8.8.8 -p udp --dport 53 -m comment --comment "External DNS Access from WBS LAN" -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth2 -s 10.0.5.0/24 -d 8.8.8.8 -p udp --dport 53 -m comment --comment "External DNS Access from Dep-A LAN" -j ACCEPT
 
-iptables -A FORWARD -i eth0 -o eth2 -s 10.0.7.0/24 -d 8.8.8.8 -p udp --dport 53 -m comment --comment "External DNS Access from WMG LAN" -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth2 -s 10.0.7.0/24 -d 8.8.8.8 -p udp --dport 53 -m comment --comment "External DNS Access from Dep-B LAN" -j ACCEPT
 
 
 # RULE 8 -- Internal users should connect to Internal DNS (Int-DNS).
 
-iptables -A FORWARD -i eth0 -o eth5 -s 10.0.5.0/24 -d 10.0.9.2 -p udp --dport 53 -m comment --comment "Internal DNS Access from WBS LAN" -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth5 -s 10.0.5.0/24 -d 10.0.9.2 -p udp --dport 53 -m comment --comment "Internal DNS Access from Dep-A LAN" -j ACCEPT
 
-iptables -A FORWARD -i eth0 -o eth5 -s 10.0.7.0/24 -d 10.0.9.2 -p udp --dport 53 -m comment --comment "Internal DNS Access from WMG LAN" -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth5 -s 10.0.7.0/24 -d 10.0.9.2 -p udp --dport 53 -m comment --comment "Internal DNS Access from Dep-B LAN" -j ACCEPT
 
 
 # RULE 9 -- Internal users should be able to ping the DMZ and internal servers and not the other way around.
@@ -165,13 +167,13 @@ iptables -A FORWARD ! -i eth0 -p icmp --icmp-type echo-reply -m comment --commen
 
 iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 -m comment --comment "Redirection to transparent proxy" -j REDIRECT --to-port 3128
 
-# Internal machines from WMG and WBS LAN connect to the external and internal internet without
+# Internal machines from Dep-B and Dep-A LAN connect to the external and internal internet without
 # any impact on user experience, caching makes responses much faster for all users and does not
 # depend on department since it is placed in the internal firewall.
 
-iptables -A INPUT -i eth0 -s 10.0.5.0/24 -p tcp --dport 3128 -m comment --comment "WBS LAN external/internal internet access" -j ACCEPT
+iptables -A INPUT -i eth0 -s 10.0.5.0/24 -p tcp --dport 3128 -m comment --comment "Dep-A LAN external/internal internet access" -j ACCEPT
 
-iptables -A INPUT -i eth0 -s 10.0.7.0/24 -p tcp --dport 3128 -m comment --comment "WMG LAN external/internal internet access" -j ACCEPT
+iptables -A INPUT -i eth0 -s 10.0.7.0/24 -p tcp --dport 3128 -m comment --comment "Dep-B LAN external/internal internet access" -j ACCEPT
 
 iptables -A INPUT -i eth2 -s 201.224.0.0/16 -p tcp -m comment --comment "Response from Ext-WWW to transparent proxy" -j ACCEPT
 

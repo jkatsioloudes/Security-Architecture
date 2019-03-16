@@ -1,6 +1,6 @@
-# Staff machine in WBS.
+# Staff machine in Dep-A.
 
 ifconfig eth0 10.0.5.2/24
 
-# Defaults to GW-WBS.
+# Defaults to GW-Dep-A.
 route add default gw 10.0.5.1

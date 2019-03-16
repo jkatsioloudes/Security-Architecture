@@ -1,7 +1,9 @@
 # External Firewall responsible for SNAT as it is the last layer when packets
 # are broadcasted out and DNAT towards DMZ servers as it is the first layer of
 # defence for incoming packets.  Outsiders only know the eth0 public IP address
-# of Warwick and nothing about the internals.  
+# of Warwick and nothing about the internals. DNATing is only done towards the
+# DMZ and NEVER to the internal LAN unless it is an ESTABLISHED,RELATED stateful
+# connection that was legitimately initiated from the inside.
 
 ifconfig eth0 137.205.0.1/16
 ifconfig eth1 172.16.0.1/30
@@ -22,10 +24,10 @@ route add -net 172.16.1.0/30 gw 172.16.0.2
 # Mail Server accessible though the DMZ Gateway Mail.
 route add -net 192.168.1.0/30 gw 192.168.0.2
 
-# WBS LAN accessible through the Internal Firewall.
+# Dep-A LAN accessible through the Internal Firewall.
 route add -net 10.0.5.0/24 gw 10.0.0.2
 
-# WMG LAN accessible through the Internal Firewall.
+# Dep-B LAN accessible through the Internal Firewall.
 route add -net 10.0.7.0/24 gw 10.0.0.2
 
 # Public Internet is the Default route of the External Firewall.
@@ -91,9 +93,9 @@ iptables -A FORWARD -i eth2 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -
 
 # RULE 6 -- Internal users should connect to External DNS that resides in the public Internet (Ext-DNS).
 
-iptables -A FORWARD -i eth2 -o eth0 -s 10.0.5.0/24 -d 8.8.8.8 -p udp --dport 53 -m comment --comment "External DNS Access from WBS LAN" -j ACCEPT
+iptables -A FORWARD -i eth2 -o eth0 -s 10.0.5.0/24 -d 8.8.8.8 -p udp --dport 53 -m comment --comment "External DNS Access from Dep-A LAN" -j ACCEPT
 
-iptables -A FORWARD -i eth2 -o eth0 -s 10.0.7.0/24 -d 8.8.8.8 -p udp --dport 53 -m comment --comment "External DNS Access from WMG LAN" -j ACCEPT
+iptables -A FORWARD -i eth2 -o eth0 -s 10.0.7.0/24 -d 8.8.8.8 -p udp --dport 53 -m comment --comment "External DNS Access from Dep-B LAN" -j ACCEPT
 
 
 # RULE 7 -- Allow Pings (and Replies) from outside to the external firewall.

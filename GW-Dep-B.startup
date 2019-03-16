@@ -1,5 +1,4 @@
-# Gateway WMG is responsible for Warwick's Manufacturing
-# Group machines.
+# Gateway Dep-B is responsible for Department's B machines.
 
 ifconfig eth0 10.0.6.2/30
 ifconfig eth1 10.0.7.1/24

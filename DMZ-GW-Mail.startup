@@ -8,18 +8,20 @@ ifconfig eth2 192.168.1.1/30
 
 
 # The following constitutes a security restriction 
-# where the gateway only knows about the WBS and 
-# WMG LAN as business requirements suggest that
-# only those internal components need to contact
-# the DMZ and not the rest, i.e Internal Servers. 
-# Otherwise the packet is sent to the external 
-# firewall which is reasonable for those senders
-# that contact the DMZ from outside.
+# where the gateway only knows about the Dep-A and 
+# Dep-B LAN and no internal servers or admins etc.
+# Business requirements suggest that only those 
+# internal components need to contact the DMZ and
+# not the rest. Packets are sent by default to the 
+# external firewall unless they are specifically
+# intented for inside to make it more challenging
+# for an attacker to explore the internals from
+# the DMZ.
 
-# WBS LAN accessible through the Internal Firewall.
+# Dep-A LAN accessible through the Internal Firewall.
 route add -net 10.0.5.0/24 gw 10.0.2.1
 
-# WMG LAN accessible through the Internal Firewall.
+# Dep-B LAN accessible through the Internal Firewall.
 route add -net 10.0.7.0/24 gw 10.0.2.1
 
 # External Firewall as Default for the rest.

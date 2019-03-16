@@ -1,4 +1,4 @@
-# Open VPN service offering acccess to inside LAN
+# Open VPN service offering acccess to enterprise LAN
 # for outsiders but also to insiders to potential
 # facilities outside. Due to this, it is a highly risky
 # asset due to the impact of someone accessing the
