@@ -1,7 +1,7 @@
-# Insider threat in Dep-B with intent to move and
+# Insider threat in Dep-A with intent to move and
 # poison the internal network as deep as possible.
 
 ifconfig eth0 10.0.5.3/24
 
-# Defaults to GW-Dep-B.
+# Defaults to GW-Dep-A.
 route add default gw 10.0.5.1
