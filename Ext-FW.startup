@@ -85,11 +85,12 @@ iptables -A FORWARD -i eth3 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -
 
 # RULE 5 -- Internal users should connect to websites residing in the public Internet (Ext-WWW).
 
-# The following rule is directly related to Squid Proxy which runs in the internal firewall
-# that after redirecting to the transparent proxy running on port 3128 broadcasts packets
+# The following rules are directly related to Squid Proxy which runs in the internal firewall
+# that after redirecting to the transparent proxy running on port 3128 and 3129 broadcasts packets
 # to the external firewall.
 
-iptables -A FORWARD -i eth2 -o eth0 -s 10.0.0.2 -p tcp --dport 80 -j ACCEPT
+iptables -A FORWARD -i eth2 -o eth0 -s 10.0.0.2 -p tcp --match multiport --dports 80,443 -j ACCEPT
+
 
 # The following two rules are also used for RULE 6 to make the connection stateful.
 

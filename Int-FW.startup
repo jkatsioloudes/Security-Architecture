@@ -119,13 +119,10 @@ iptables -A FORWARD -i eth4 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -
 
 # RULE 5 -- Internal users should connect to websites residing in the public Internet (Ext-WWW).
 
-# This is achieved by forwarding all port 80 packets towards the external firewall. The destination IP address is not specified assuming that websites in the public Internet can reside in any IP address.
-
-iptables -A FORWARD -i eth0 -o eth2 -s 10.0.5.0/24 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "External WWW Access to Dep-A LAN" -j ACCEPT
-
-iptables -A FORWARD -i eth0 -o eth2 -s 10.0.7.0/24 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "External WWW Access to Dep-B LAN" -j ACCEPT
-
-# The following two rules are also used for RULE 7 to make the connection stateful.
+# This is achieved by forwarding all port 80 and 443 packets towards the external firewall. The
+# destination IP address is not specified assuming that websites in the public Internet can reside
+# in any IP address and connection is achieved via the squid proxy therefore firewall's INPUT 
+# and OUTPUT chains. The following two rules are also used for RULE 7 to make the connection stateful.
 
 iptables -A FORWARD -i eth0 -o eth2 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful WWW Connection" -j ACCEPT
 
@@ -134,18 +131,16 @@ iptables -A FORWARD -i eth2 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -
 
 # RULE 6 -- Internal users should connect to internal websites via internal WWW (Int-WWW).
 
-iptables -A FORWARD -i eth0 -o eth5 -s 10.0.5.0/24 -d 10.0.9.3 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "Internal WWW Access to Dep-A LAN" -j ACCEPT
-
-iptables -A FORWARD -i eth0 -o eth5 -s 10.0.7.0/24 -d 10.0.9.3 -p tcp --syn --dport 80 -m conntrack --ctstate NEW -m comment --comment "Internal WWW Access to Dep-B LAN" -j ACCEPT
-
-# The following two rules are also used for RULE 8 to make the connection stateful.
+# Again passing via Squid as Rule 5. The following two rules are also used for RULE 8 to make the connection stateful.
 
 iptables -A FORWARD -i eth0 -o eth5 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful WWW Connection" -j ACCEPT
 
 iptables -A FORWARD -i eth5 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful WWW Connection" -j ACCEPT
 
 
-# RULE 7 -- Internal users should connect to External DNS that resides in the public Internet (Ext-DNS).  The destination address is specified to prevent attacks such as DNS poisoning.
+# RULE 7 -- Internal users should connect to External DNS that resides in the public Internet (Ext-DNS).  
+
+# The destination address is specified to prevent attacks such as DNS poisoning.
 
 iptables -A FORWARD -i eth0 -o eth2 -s 10.0.5.0/24 -d 8.8.8.8 -p udp --dport 53 -m comment --comment "External DNS Access from Dep-A LAN" -j ACCEPT
 
@@ -192,13 +187,15 @@ iptables -A OUTPUT -p icmp --icmp-type echo-reply -m comment --comment "Pong fro
 
 iptables -t nat -A PREROUTING -i eth0 -p tcp --syn --dport 80 -m comment --comment "Redirection to transparent proxy" -j REDIRECT --to-port 3128
 
+iptables -t nat -A PREROUTING -i eth0 -p tcp --syn --dport 443 -m comment --comment "Redirection to transparent proxy" -j REDIRECT --to-port 3129
+
 # Internal machines from Dep-B and Dep-A LAN connect to the external and internal internet without
 # any impact on user experience, caching makes responses much faster for all users and does not
 # depend on department since it is placed in the internal firewall.
 
-iptables -A INPUT -i eth0 -s 10.0.5.0/24 -p tcp --dport 3128 -m comment --comment "Dep-A LAN external/internal internet access" -j ACCEPT
+iptables -A INPUT -i eth0 -s 10.0.5.0/24 -p tcp --match multiport --dports 3128,3129 -m comment --comment "Dep-A LAN external/internal internet access" -j ACCEPT
 
-iptables -A INPUT -i eth0 -s 10.0.7.0/24 -p tcp --dport 3128 -m comment --comment "Dep-B LAN external/internal internet access" -j ACCEPT
+iptables -A INPUT -i eth0 -s 10.0.7.0/24 -p tcp --match multiport --dports 3128,3129 -m comment --comment "Dep-B LAN external/internal internet access" -j ACCEPT
 
 iptables -A INPUT -i eth2 -s 201.224.0.0/16 -p tcp -m comment --comment "Response from Ext-WWW to transparent proxy" -j ACCEPT
 
