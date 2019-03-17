@@ -20,3 +20,13 @@ route add -net 10.0.7.0/24 gw 10.0.6.2
 
 # Defaults to the Internal Firewall.
 route add default gw 10.0.3.1
+
+
+# Firewall rules to prevent attacker's lateral movement 
+# from Dep-A to Dep-B and vice-versa.
+
+iptables -A FORWARD -i eth1 -o eth2 -m comment --comment "Drops packets from Dep-A to Dep-B" -j DROP
+
+iptables -A FORWARD -i eth2 -o eth1 -m comment --comment "Drops packets from Dep-B to Dep-A" -j DROP
+
+
