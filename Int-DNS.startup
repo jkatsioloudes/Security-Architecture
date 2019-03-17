@@ -24,7 +24,7 @@ while true; do nc -lvp 38964; done &
 # 2) Knock the port 1887 using: "nmap -Pn --max-retries 0 -p 1887 10.0.9.2". Netcat can be used too.
 # 3) Within 45 seconds, perform the following command from admin: "ssh -p 36747 root@10.0.9.2".
 
-iptables -A INPUT -s 10.0.13.0/30 -p tcp --dport 1887 -m recent --set --name portknock
+iptables -A INPUT -s 10.0.13.0/30 -p tcp --syn --dport 1887 -m recent --set --name portknock
 
 iptables -A INPUT -s 10.0.13.0/30 -p tcp --syn --dport 36747 -m recent --rcheck --seconds 45 --name portknock -m conntrack --ctstate NEW -j ACCEPT
 
