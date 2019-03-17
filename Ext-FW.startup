@@ -36,6 +36,13 @@ route add default gw 137.205.0.2
 
 # Firewall Rules for the External Firewall
 
+# RULE 0 -- Disable IP6 Traffic which is accepted by default.
+
+ip6tables -t filter -P INPUT DROP
+ip6tables -t filter -P OUTPUT DROP
+ip6tables -t filter -P FORWARD DROP
+
+
 # RULE 1 -- Default Policies are set to DROP towards whitelisting.
 
 iptables -t filter -P INPUT DROP
