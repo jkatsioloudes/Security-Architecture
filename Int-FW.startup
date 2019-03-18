@@ -48,21 +48,85 @@ route add default gw 10.0.0.1
 
 # Firewall Rules for the Internal Firewall
 
-# RULE 0 -- Disable IP6 Traffic which is accepted by default.
+# DISABLES IP6 Traffic which is accepted by default.
 
 ip6tables -t filter -P INPUT DROP
 ip6tables -t filter -P OUTPUT DROP
 ip6tables -t filter -P FORWARD DROP
 
 
-# RULE 1 -- Default Policies are set to DROP towards whitelisting.
+# DEFAULT Policies are set to DROP towards whitelisting.
 
 iptables -t filter -P INPUT DROP
 iptables -t filter -P OUTPUT DROP
 iptables -t filter -P FORWARD DROP
 
 
-# RULE 2 -- DNAT for DMZ's OpenVPN Server alongside FORWARD chain stateful rules.
+# LOGs of dropped packets matching XMAS scans and other malicious methodologies.
+
+# https://www.booleanworld.com/depth-guide-iptables-linux-firewall/
+# -sX flag from https://nmap.org/book/scan-methods-null-fin-xmas-scan.html
+
+# The field "--log-prefix=iptables:" makes log inspection much easier using 
+# cat /var/log/syslog | grep iptables
+
+iptables -A INPUT -p tcp -m tcp --tcp-flags ALL FIN,PSH,URG -m comment --comment "Logs Nmap Scan Type 1" -j LOG --log-prefix=iptables:
+
+iptables -A INPUT -p tcp -m tcp --tcp-flags SYN,FIN SYN,FIN -m comment --comment "Logs Nmap Scan Type 2" -j LOG --log-prefix=iptables:
+
+iptables -A INPUT -p tcp -m conntrack --ctstate NEW -m tcp ! --tcp-flags FIN,SYN,RST,ACK SYN -m comment --comment "Logs Nmap Scan Type 3" -j LOG --log-prefix=iptables:
+
+
+# ESTABLISHED, RELATED are placed high in order inside chains to boost performance.
+
+iptables -A FORWARD -i eth0 -o eth1 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Incoming Internal VPN connection" -j ACCEPT
+
+iptables -A FORWARD -i eth1 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Outgoing Internal VPN connection" -j ACCEPT
+
+iptables -A FORWARD -i eth0 -o eth3 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Incoming Internal Mail connection" -j ACCEPT
+
+iptables -A FORWARD -i eth3 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Outgoing Internal Mail connection" -j ACCEPT
+
+iptables -A FORWARD -i eth0 -o eth4 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Incoming Internal LDAP connection" -j ACCEPT
+
+iptables -A FORWARD -i eth4 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Outgoing Internal LDAP connection" -j ACCEPT
+
+iptables -A FORWARD -i eth0 -o eth2 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Incoming External WWW Connection" -j ACCEPT
+
+iptables -A FORWARD -i eth2 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Outgoing External WWW Connection" -j ACCEPT
+
+iptables -A FORWARD -i eth0 -o eth5 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Incoming Internal WWW Connection" -j ACCEPT
+
+iptables -A FORWARD -i eth5 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Outgoing Internal WWW Connection" -j ACCEPT
+
+iptables -A FORWARD -i eth6 -o eth1 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Incoming SSH from Admin to VPN" -j ACCEPT
+
+iptables -A FORWARD -i eth1 -o eth6 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Outgoing SSH from Admin to VPN" -j ACCEPT
+
+iptables -A FORWARD -i eth6 -o eth3 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Incoming SSH from Admin to Mail" -j ACCEPT
+
+iptables -A FORWARD -i eth3 -o eth6 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Outgoing SSH from Admin to Mail" -j ACCEPT
+
+iptables -A FORWARD -i eth6 -o eth5 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Incoming SSH from Admin to Internal Servers" -j ACCEPT
+
+iptables -A FORWARD -i eth5 -o eth6 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Outgoing SSH from Admin to Internal Servers" -j ACCEPT
+
+iptables -A FORWARD -i eth6 -o eth4 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Incoming SSH from Admin to LDAP" -j ACCEPT
+
+iptables -A FORWARD -i eth4 -o eth6 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Outgoing SSH from Admin to LDAP" -j ACCEPT
+
+
+# Forward chain logs of dropped packets matching malicious scans are placed after RELATED and
+# ESTABLISHED for performance purposes.
+
+iptables -A FORWARD -p tcp -m tcp --tcp-flags ALL FIN,PSH,URG -m comment --comment "Logs Nmap Scan Type 1" -j LOG --log-prefix=iptables:
+
+iptables -A FORWARD -p tcp -m tcp --tcp-flags SYN,FIN SYN,FIN -m comment --comment "Logs Nmap Scan Type 2" -j LOG --log-prefix=iptables:
+
+iptables -A FORWARD -p tcp -m conntrack --ctstate NEW -m tcp ! --tcp-flags FIN,SYN,RST,ACK SYN -m comment --comment "Logs Nmap Scan Type 3" -j LOG --log-prefix=iptables:
+
+
+# RULE 1 -- DNAT for DMZ's OpenVPN Server alongside FORWARD chain stateful rules.
 
 # Only accepts connections from Dep-A and Dep-B IP range to follow the Least Privilege Principle.
 
@@ -72,12 +136,8 @@ iptables -A FORWARD -i eth0 -o eth1 -s 10.0.5.0/24 -d 172.16.1.2 -p tcp --syn --
 
 iptables -A FORWARD -i eth0 -o eth1 -s 10.0.7.0/24 -d 172.16.1.2 -p tcp --syn --dport 1194 -m conntrack --ctstate NEW -m comment --comment "Only accept VPN connection initiations from the Dep-B LAN" -j ACCEPT
 
-iptables -A FORWARD -i eth0 -o eth1 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful VPN connection" -j ACCEPT
 
-iptables -A FORWARD -i eth1 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful VPN connection" -j ACCEPT
-
-
-# RULE 3 -- DNAT for DMZ's Mail Server alongside FORWARD chain stateful rules.
+# RULE 2 -- DNAT for DMZ's Mail Server alongside FORWARD chain stateful rules.
 
 iptables -t nat -A PREROUTING -i eth0 -p tcp --syn --match multiport --dports 25,587,993 -m comment --comment "Routes incoming packets addressed to the Mail Server" -j DNAT --to-destination 192.168.1.2
 
@@ -85,12 +145,8 @@ iptables -A FORWARD -i eth0 -o eth3 -s 10.0.5.0/24 -d 192.168.1.2 -p tcp --syn -
 
 iptables -A FORWARD -i eth0 -o eth3 -s 10.0.7.0/24 -d 192.168.1.2 -p tcp --syn --match multiport --dports 25,587,993 -m conntrack --ctstate NEW -m comment --comment "Accept new Mail connection initiation from Dep-B LAN" -j ACCEPT
 
-iptables -A FORWARD -i eth0 -o eth3 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Mail connection" -j ACCEPT
 
-iptables -A FORWARD -i eth3 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Mail connection" -j ACCEPT
-
-
-# RULE 4 -- DNAT for Internal LDAP Server alongside FORWARD chain stateful rules for both UDP and TCP.
+# RULE 3 -- DNAT for Internal LDAP Server alongside FORWARD chain stateful rules for both UDP and TCP.
 
 # UDP is implemented in a bidirectional manner due to the nature of LDAP (Reference: https://serverfault.com/questions/828769/need-iptables-port-forwarding-for-bidirectional-udp)
 
@@ -110,35 +166,16 @@ iptables -A FORWARD -i eth0 -o eth4 -s 10.0.5.0/24 -d 10.0.11.2 -p tcp --syn --d
 
 iptables -A FORWARD -i eth0 -o eth4 -s 10.0.7.0/24 -d 10.0.11.2 -p tcp --syn --dport 389 -m conntrack --ctstate NEW -m comment --comment "Accept new TCP LDAP connection initiations from Dep-B LAN" -j ACCEPT
 
-# Established, Related 
 
-iptables -A FORWARD -i eth0 -o eth4 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful LDAP connection" -j ACCEPT
+# RULE 4 -- Internal users should connect to Ext-WWW and Int-WWW, look RULE 10 due to SQUID.
 
-iptables -A FORWARD -i eth4 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful LDAP connection" -j ACCEPT
-
-
-# RULE 5 -- Internal users should connect to websites residing in the public Internet (Ext-WWW).
-
-# This is achieved by forwarding all port 80 and 443 packets towards the external firewall. The
-# destination IP address is not specified assuming that websites in the public Internet can reside
-# in any IP address and connection is achieved via the squid proxy therefore firewall's INPUT 
-# and OUTPUT chains. The following two rules are also used for RULE 7 to make the connection stateful.
-
-iptables -A FORWARD -i eth0 -o eth2 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful WWW Connection" -j ACCEPT
-
-iptables -A FORWARD -i eth2 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful WWW Connection" -j ACCEPT
+# Achieved above using the ESTABLISHED,RELATED. This is because it was done by forwarding 
+# port 80 and 443 packets towards the external firewall. The destination IP address is not 
+# specified assuming that websites in the public Internet can reside in any IP address and 
+# connection is achieved via the squid proxy therefore firewall's INPUT and OUTPUT chains.
 
 
-# RULE 6 -- Internal users should connect to internal websites via internal WWW (Int-WWW).
-
-# Again passing via Squid as Rule 5. The following two rules are also used for RULE 8 to make the connection stateful.
-
-iptables -A FORWARD -i eth0 -o eth5 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful WWW Connection" -j ACCEPT
-
-iptables -A FORWARD -i eth5 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful WWW Connection" -j ACCEPT
-
-
-# RULE 7 -- Internal users should connect to External DNS that resides in the public Internet (Ext-DNS).  
+# RULE 5 -- Internal users should connect to External DNS that resides in the public Internet (Ext-DNS).  
 
 # The destination address is specified to prevent attacks such as DNS poisoning.
 
@@ -147,35 +184,35 @@ iptables -A FORWARD -i eth0 -o eth2 -s 10.0.5.0/24 -d 8.8.8.8 -p udp --dport 53 
 iptables -A FORWARD -i eth0 -o eth2 -s 10.0.7.0/24 -d 8.8.8.8 -p udp --dport 53 -m comment --comment "External DNS Access from Dep-B LAN" -j ACCEPT
 
 
-# RULE 8 -- Internal users should connect to Internal DNS (Int-DNS).
+# RULE 6 -- Internal users should connect to Internal DNS (Int-DNS).
 
 iptables -A FORWARD -i eth0 -o eth5 -s 10.0.5.0/24 -d 10.0.9.2 -p udp --dport 53 -m comment --comment "Internal DNS Access from Dep-A LAN" -j ACCEPT
 
 iptables -A FORWARD -i eth0 -o eth5 -s 10.0.7.0/24 -d 10.0.9.2 -p udp --dport 53 -m comment --comment "Internal DNS Access from Dep-B LAN" -j ACCEPT
 
 
-# RULE 9 -- Internal users should be able to ping the DMZ and internal servers (never the other way around) and never the admin LAN.
+# RULE 7 -- Internal users should be able to ping the DMZ and internal servers (never the other way around) and never the admin LAN.
 
 iptables -A FORWARD -i eth0 ! -o eth6 -p icmp --icmp-type echo-request -m comment --comment "Internal clients to Ping internal and DMZ servers" -j ACCEPT
 
 iptables -A FORWARD ! -i eth0 -p icmp --icmp-type echo-reply -m comment --comment "Pong response from internal clients and DMZ servers to internal clients" -j ACCEPT
 
 
-# RULE 10 -- Admins should be able to ping the DMZ and internal servers and not the other way around.
+# RULE 8 -- Admins should be able to ping the DMZ and internal servers and not the other way around.
 
 iptables -A FORWARD -i eth6 -p icmp --icmp-type echo-request -m comment --comment "Admin clients to Ping internal and DMZ servers" -j ACCEPT
 
 iptables -A FORWARD ! -i eth6 -p icmp --icmp-type echo-reply -m comment --comment "Pong response from internal clients and DMZ servers to Admin clients" -j ACCEPT
 
 
-# RULE 11 -- Internal Firewall receives and replies to pings. 
+# RULE 9 -- Internal Firewall receives and replies to pings. 
 
 iptables -A INPUT -p icmp --icmp-type echo-request -m comment --comment "Ping to Int-FW" -j ACCEPT
 
 iptables -A OUTPUT -p icmp --icmp-type echo-reply -m comment --comment "Pong from Int-FW" -j ACCEPT
 
 
-# RULE 12 -- SQUID PROXY for Logging, Caching and Filtering for both external and internal servers
+# RULE 10 -- SQUID PROXY for Logging, Caching and Filtering for both external and internal servers
 # and this is why this is placed in the internal firewall and not in the external.
 
 # Squid Proxy
@@ -218,7 +255,7 @@ mkdir /var/cache/squid
 service squid start
 
 
-# RULE 13 -- SSH forwarding including misdirection ports and port knocking legit ports.
+# RULE 11 -- SSH forwarding including misdirection ports and port knocking legit ports.
 
 # Misdirection ports.
 
@@ -233,22 +270,3 @@ iptables -A FORWARD -s 10.0.13.0/30 -i eth6 -p tcp --syn --dport 1887 -m conntra
 # SSH Port is 36747 and not 22.
 
 iptables -A FORWARD -s 10.0.13.0/30 -i eth6 -p tcp --syn --dport 36747 -m conntrack --ctstate NEW -j ACCEPT
-
-# Makes SSH connections stateful between the interfaces of admin and servers.
-
-iptables -A FORWARD -i eth6 -o eth1 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful SSH from Admin" -j ACCEPT
-
-iptables -A FORWARD -i eth1 -o eth6 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful SSH from Admin" -j ACCEPT
-
-iptables -A FORWARD -i eth6 -o eth3 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful SSH from Admin" -j ACCEPT
-
-iptables -A FORWARD -i eth3 -o eth6 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful SSH from Admin" -j ACCEPT
-
-iptables -A FORWARD -i eth6 -o eth5 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful SSH from Admin" -j ACCEPT
-
-iptables -A FORWARD -i eth5 -o eth6 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful SSH from Admin" -j ACCEPT
-
-iptables -A FORWARD -i eth6 -o eth4 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful SSH from Admin" -j ACCEPT
-
-iptables -A FORWARD -i eth4 -o eth6 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful SSH from Admin" -j ACCEPT
-

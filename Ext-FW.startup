@@ -36,21 +36,48 @@ route add default gw 137.205.0.2
 
 # Firewall Rules for the External Firewall
 
-# RULE 0 -- Disable IP6 Traffic which is accepted by default.
+# DISABLES IP6 Traffic which is accepted by default.
 
 ip6tables -t filter -P INPUT DROP
 ip6tables -t filter -P OUTPUT DROP
 ip6tables -t filter -P FORWARD DROP
 
 
-# RULE 1 -- Default Policies are set to DROP towards whitelisting.
+# DEFAULT Policies are set to DROP towards whitelisting.
 
 iptables -t filter -P INPUT DROP
 iptables -t filter -P OUTPUT DROP
 iptables -t filter -P FORWARD DROP
 
 
-# RULE 2 -- SNAT for exiting packets.
+# ESTABLISHED, RELATED are placed high in order inside chains to boost performance.
+
+iptables -A FORWARD -i eth0 -o eth1 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Incoming VPN connection" -j ACCEPT
+
+iptables -A FORWARD -i eth1 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Outgoing VPN connection" -j ACCEPT
+
+iptables -A FORWARD -i eth0 -o eth3 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Incoming Mail connection" -j ACCEPT
+
+iptables -A FORWARD -i eth3 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Outgoing Mail connection" -j ACCEPT
+
+iptables -A FORWARD -i eth0 -o eth2 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Incoming WWW Connection" -j ACCEPT
+
+iptables -A FORWARD -i eth2 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Outgoing WWW Connection" -j ACCEPT
+
+
+# LOGs of dropped packets matching XMAS scans and other malicious methodologies.
+
+# The field "--log-prefix=iptables:" makes log inspection much easier using 
+# cat /var/log/syslog | grep iptables
+
+iptables -A INPUT -p tcp -m tcp --tcp-flags ALL FIN,PSH,URG -m comment --comment "Logs Nmap Scan Type 1" -j LOG --log-prefix=iptables:
+
+iptables -A INPUT -p tcp -m tcp --tcp-flags SYN,FIN SYN,FIN -m comment --comment "Logs Nmap Scan Type 2" -j LOG --log-prefix=iptables:
+
+iptables -A INPUT -p tcp -m conntrack --ctstate NEW -m tcp ! --tcp-flags FIN,SYN,RST,ACK SYN -m comment --comment "Logs Nmap Scan Type 3" -j LOG --log-prefix=iptables:
+
+
+# RULE 1 -- SNAT for exiting packets.
 
 # Source NATTing so that packets exiting the External Firewall will 
 # inherit the public IP Address of our organisation and prevent the
@@ -59,7 +86,7 @@ iptables -t filter -P FORWARD DROP
 iptables -t nat -A POSTROUTING -o eth0 -m comment --comment "External Firewall's Public IP becomes exiting packets source address" -j SNAT --to-source 137.205.0.1
 
 
-# RULE 3 -- DNAT for DMZ's OpenVPN Server alongside FORWARD chain stateful rules.
+# RULE 2 -- DNAT for DMZ's OpenVPN Server alongside FORWARD chain stateful rules.
 
 # Only accepts connections from the External Office IP range to follow the Least Privilege Principle.
 
@@ -67,23 +94,15 @@ iptables -t nat -A PREROUTING -i eth0 -p tcp --syn --dport 1194 -m comment --com
 
 iptables -A FORWARD -i eth0 -o eth1 -s 22.39.224.16/30 -p tcp --syn --dport 1194 -m conntrack --ctstate NEW -m comment --comment "Only accept VPN connection initiations from the Ext-Office range" -j ACCEPT
 
-iptables -A FORWARD -i eth0 -o eth1 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful VPN connection" -j ACCEPT
 
-iptables -A FORWARD -i eth1 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful VPN connection" -j ACCEPT
-
-
-# RULE 4 -- DNAT for DMZ's Mail Server alongside FORWARD chain stateful rules.
+# RULE 3 -- DNAT for DMZ's Mail Server alongside FORWARD chain stateful rules.
 
 iptables -t nat -A PREROUTING -i eth0 -p tcp --syn --match multiport --dports 25,587,993 -m comment --comment "Routes incoming packets addressed to the Mail Server" -j DNAT --to-destination 192.168.1.2
 
 iptables -A FORWARD -i eth0 -o eth3 -p tcp --syn --match multiport --dports 25,587,993 -m conntrack --ctstate NEW -m comment --comment "Accept new Mail connection initiation from anywhere" -j ACCEPT
 
-iptables -A FORWARD -i eth0 -o eth3 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Mail connection" -j ACCEPT
 
-iptables -A FORWARD -i eth3 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful Mail connection" -j ACCEPT
-
-
-# RULE 5 -- Internal users should connect to websites residing in the public Internet (Ext-WWW).
+# RULE 4 -- Internal users should connect to websites residing in the public Internet (Ext-WWW).
 
 # The following rules are directly related to Squid Proxy which runs in the internal firewall
 # that after redirecting to the transparent proxy running on port 3128 and 3129 broadcasts packets
@@ -92,23 +111,15 @@ iptables -A FORWARD -i eth3 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -
 iptables -A FORWARD -i eth2 -o eth0 -s 10.0.0.2 -p tcp --match multiport --dports 80,443 -j ACCEPT
 
 
-# The following two rules are also used for RULE 6 to make the connection stateful.
-
-iptables -A FORWARD -i eth0 -o eth2 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful WWW Connection" -j ACCEPT
-
-iptables -A FORWARD -i eth2 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -m comment --comment "Stateful WWW Connection" -j ACCEPT
-
-
-# RULE 6 -- Internal users should connect to External DNS that resides in the public Internet (Ext-DNS).
+# RULE 5 -- Internal users should connect to External DNS that resides in the public Internet (Ext-DNS).
 
 iptables -A FORWARD -i eth2 -o eth0 -s 10.0.5.0/24 -d 8.8.8.8 -p udp --dport 53 -m comment --comment "External DNS Access from Dep-A LAN" -j ACCEPT
 
 iptables -A FORWARD -i eth2 -o eth0 -s 10.0.7.0/24 -d 8.8.8.8 -p udp --dport 53 -m comment --comment "External DNS Access from Dep-B LAN" -j ACCEPT
 
 
-# RULE 7 -- Allow Pings (and Replies) from outside to the external firewall.
+# RULE 6 -- Allow Pings (and Replies) from outside to the external firewall.
 
 iptables -A INPUT -p icmp --icmp-type echo-request -m comment --comment "Ping to Ext-FW" -j ACCEPT
 
 iptables -A OUTPUT -p icmp --icmp-type echo-reply -m comment --comment "Pong from Ext-FW" -j ACCEPT
-
