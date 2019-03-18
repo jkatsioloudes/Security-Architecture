@@ -154,9 +154,9 @@ iptables -A FORWARD -i eth0 -o eth5 -s 10.0.5.0/24 -d 10.0.9.2 -p udp --dport 53
 iptables -A FORWARD -i eth0 -o eth5 -s 10.0.7.0/24 -d 10.0.9.2 -p udp --dport 53 -m comment --comment "Internal DNS Access from Dep-B LAN" -j ACCEPT
 
 
-# RULE 9 -- Internal users should be able to ping the DMZ and internal servers and not the other way around.
+# RULE 9 -- Internal users should be able to ping the DMZ and internal servers (never the other way around) and never the admin LAN.
 
-iptables -A FORWARD -i eth0 -p icmp --icmp-type echo-request -m comment --comment "Internal clients to Ping internal and DMZ servers" -j ACCEPT
+iptables -A FORWARD -i eth0 ! -o eth6 -p icmp --icmp-type echo-request -m comment --comment "Internal clients to Ping internal and DMZ servers" -j ACCEPT
 
 iptables -A FORWARD ! -i eth0 -p icmp --icmp-type echo-reply -m comment --comment "Pong response from internal clients and DMZ servers to internal clients" -j ACCEPT
 
