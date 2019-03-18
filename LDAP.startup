@@ -30,3 +30,8 @@ iptables -A INPUT -s 10.0.13.0/30 -p tcp --syn --dport 1887 -m comment --comment
 iptables -A INPUT -s 10.0.13.0/30 -p tcp --syn --dport 36747 -m recent --rcheck --seconds 45 --name portknock -m conntrack --ctstate NEW -m comment --comment "SSH Unconventional Port" -j ACCEPT
 
 iptables -A INPUT -p tcp --syn --dport 36747 -m comment --comment "Restrics connections without first portknocking" -j DROP
+
+
+# Acts as a remote log server for the firewall logs.
+
+service rsyslog restart

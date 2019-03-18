@@ -240,9 +240,10 @@ iptables -A INPUT -i eth2 -s 201.224.0.0/16 -p tcp -m comment --comment "Respons
 
 iptables -A INPUT -i eth5 -s 10.0.9.3 -p tcp -m comment --comment "Response from Int-WWW to transparent proxy" -j ACCEPT
 
-# The output of the internal firewall after proxying is then forwarded.
+# The output of the internal firewall after proxying is then forwarded, "! - o" is necessary
+# to avoid remote logging confusion.
 
-iptables -A OUTPUT -p tcp -m comment --comment "Squid proxy redirection forward continues" -j ACCEPT
+iptables -A OUTPUT ! -o eth4 -p tcp -m comment --comment "Squid proxy redirection forward continues" -j ACCEPT
 
 
 # SQUID LOG
@@ -270,3 +271,15 @@ iptables -A FORWARD -s 10.0.13.0/30 -i eth6 -p tcp --syn --dport 1887 -m conntra
 # SSH Port is 36747 and not 22.
 
 iptables -A FORWARD -s 10.0.13.0/30 -i eth6 -p tcp --syn --dport 36747 -m conntrack --ctstate NEW -j ACCEPT
+
+
+# REMOTE Logs.
+# https://www.tecmint.com/install-rsyslog-centralized-logging-in-centos-ubuntu/
+
+service rsyslog restart
+
+# RULE 12 -- REMOTE LOGGING performed in the LDAP server.
+
+iptables -A INPUT -i eth4 -s 10.0.11.2 -p tcp -j ACCEPT
+
+iptables -A OUTPUT -d 10.0.11.2 -p tcp --dport 514 -j ACCEPT

@@ -1,0 +1,4 @@
+# Internal and External Firewall should be initiated
+# after LDAP in order to successfully establish the
+# connection for the remote server.
+Int-FW:LDAP
