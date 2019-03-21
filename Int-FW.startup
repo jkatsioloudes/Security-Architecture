@@ -62,10 +62,9 @@ iptables -t filter -P OUTPUT DROP
 iptables -t filter -P FORWARD DROP
 
 
-# LOGs of dropped packets matching XMAS scans and other malicious methodologies.
+# LOGs of dropped packets matching XMAS scans and other malicious methodologies (Biswas, 2019).
 
-# https://www.booleanworld.com/depth-guide-iptables-linux-firewall/
-# -sX flag from https://nmap.org/book/scan-methods-null-fin-xmas-scan.html
+# -sX flag from nmap (nmap.org, 2019).
 
 # The field "--log-prefix=iptables:" makes log inspection much easier using 
 # cat /var/log/syslog | grep iptables
@@ -216,11 +215,9 @@ iptables -A OUTPUT -p icmp --icmp-type echo-reply -m comment --comment "Pong fro
 # and this is why this is placed in the internal firewall and not in the external.
 
 # Squid Proxy
-# https://cottagedata.com//security/squid/squid.html
-# https://www.tecmint.com/configure-squid-server-in-linux/
 
 # Redirection to transparent proxy.  Transparent is chosen to prevent installing corresponding
-# settings to all client machines. 
+# settings to all client machines (I.T Consulting, 2019), (TechMint-a, 2014).
 
 iptables -t nat -A PREROUTING -i eth0 -p tcp --syn --dport 80 -m comment --comment "Redirection to transparent proxy" -j REDIRECT --to-port 3128
 
@@ -273,8 +270,7 @@ iptables -A FORWARD -s 10.0.13.0/30 -i eth6 -p tcp --syn --dport 1887 -m conntra
 iptables -A FORWARD -s 10.0.13.0/30 -i eth6 -p tcp --syn --dport 36747 -m conntrack --ctstate NEW -j ACCEPT
 
 
-# REMOTE Logs.
-# https://www.tecmint.com/install-rsyslog-centralized-logging-in-centos-ubuntu/
+# REMOTE Logs (TechMint-b, 2018)
 
 service rsyslog restart
 
